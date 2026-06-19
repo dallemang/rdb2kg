@@ -1,0 +1,8 @@
+PREFIX vocab: <http://example.org/chinook/vocab#>
+
+SELECT ?albumTitle (COUNT(?track) AS ?trackCount) WHERE {
+    ?track  vocab:onAlbum  ?album .
+    ?album  vocab:title    ?albumTitle .
+}
+GROUP BY ?albumTitle
+ORDER BY DESC(?trackCount)

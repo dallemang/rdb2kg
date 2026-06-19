@@ -4,6 +4,9 @@ A standards-based POC kit for turning relational databases into ontology-backed 
 
 **Make the boring path boring.**
 
+> **Getting started:** see [SETUP.md](SETUP.md) for a step-by-step Windows install
+> and an end-to-end trial run against the bundled Chinook database.
+
 ## What is this?
 
 `rdb2kg` is intended to make the standard relational-to-RDF path easy to demonstrate, test, and explain.

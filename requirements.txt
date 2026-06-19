@@ -1,0 +1,9 @@
+# Dev environment for rdb2kg.
+# Recreate from scratch:
+#   python -m venv .venv
+#   .venv\Scripts\activate        (Windows)   |   source .venv/bin/activate   (macOS/Linux)
+#   pip install -r requirements.txt
+#
+# Installs rdb2kg in editable mode with its runtime + dev dependencies.
+# The dependency lists themselves live in pyproject.toml (single source of truth).
+-e .[dev]

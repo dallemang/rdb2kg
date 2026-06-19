@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rdb2kg"
+version = "0.1.0"
+description = "Standards-based POC kit for turning relational databases into ontology-backed RDF knowledge graphs"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "rdflib>=7.0",
+    "sqlalchemy>=2.0",
+    "typer>=0.12",
+    "mcp>=1.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+rdb2kg = "rdb2kg.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rdb2kg"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

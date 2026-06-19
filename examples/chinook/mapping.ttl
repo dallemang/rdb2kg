@@ -1,0 +1,322 @@
+@prefix rr:     <http://www.w3.org/ns/r2rml#> .
+@prefix vocab:  <http://example.org/chinook/vocab#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix lcc-3166-1: <https://www.omg.org/spec/LCC/Countries/ISO3166-1-CountryCodes/> .
+
+# Base IRI for all Chinook resources: http://example.org/chinook/
+#
+# Edit this file to change how relational tables map to RDF.
+# Re-run:  rdb2kg materialize examples/chinook/chinook.db examples/chinook/mapping.ttl
+#                              -o examples/chinook/output/chinook.ttl
+
+# -- Genre -------------------------------------------------------------------
+
+<#GenreMap>
+    rr:logicalTable [ rr:tableName "Genre" ] ;
+    rr:subjectMap [
+        rr:template "http://example.org/chinook/genre/G{GenreId}" ;
+        rr:class vocab:Genre
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:name ;
+        rr:objectMap [ rr:column "Name" ]
+    ] .
+
+# ── MediaType ─────────────────────────────────────────────────────────────────
+
+<#MediaTypeMap>
+    rr:logicalTable [ rr:tableName "MediaType" ] ;
+    rr:subjectMap [
+        rr:template "http://example.org/chinook/mediatype/M{MediaTypeId}" ;
+        rr:class vocab:MediaType
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:name ;
+        rr:objectMap [ rr:column "Name" ]
+    ] .
+
+# ── Artist ────────────────────────────────────────────────────────────────────
+
+<#ArtistMap>
+    rr:logicalTable [ rr:tableName "Artist" ] ;
+    rr:subjectMap [
+        rr:template "http://example.org/chinook/artist/A{ArtistId}" ;
+        rr:class vocab:Artist
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:name ;
+        rr:objectMap [ rr:column "Name" ]
+    ] .
+
+# ── Album ─────────────────────────────────────────────────────────────────────
+
+<#AlbumMap>
+    rr:logicalTable [ rr:tableName "Album" ] ;
+    rr:subjectMap [
+        rr:template "http://example.org/chinook/album/A{AlbumId}" ;
+        rr:class vocab:Album
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:title ;
+        rr:objectMap [ rr:column "Title" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:byArtist ;
+        rr:objectMap [
+            rr:parentTriplesMap <#ArtistMap> ;
+            rr:joinCondition [ rr:child "ArtistId" ; rr:parent "ArtistId" ]
+        ]
+    ] .
+
+# ── Track ─────────────────────────────────────────────────────────────────────
+
+<#TrackMap>
+    rr:logicalTable [ rr:tableName "Track" ] ;
+    rr:subjectMap [
+        rr:template "http://example.org/chinook/track/T{TrackId}" ;
+        rr:class vocab:Track
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:name ;
+        rr:objectMap [ rr:column "Name" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:composer ;
+        rr:objectMap [ rr:column "Composer" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:duration ;
+        rr:objectMap [ rr:column "Milliseconds" ; rr:datatype xsd:integer ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:unitPrice ;
+        rr:objectMap [ rr:column "UnitPrice" ; rr:datatype xsd:decimal ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:onAlbum ;
+        rr:objectMap [
+            rr:parentTriplesMap <#AlbumMap> ;
+            rr:joinCondition [ rr:child "AlbumId" ; rr:parent "AlbumId" ]
+        ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:hasGenre ;
+        rr:objectMap [
+            rr:parentTriplesMap <#GenreMap> ;
+            rr:joinCondition [ rr:child "GenreId" ; rr:parent "GenreId" ]
+        ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:hasMediaType ;
+        rr:objectMap [
+            rr:parentTriplesMap <#MediaTypeMap> ;
+            rr:joinCondition [ rr:child "MediaTypeId" ; rr:parent "MediaTypeId" ]
+        ]
+    ] .
+
+# ── Employee ──────────────────────────────────────────────────────────────────
+
+<#EmployeeMap>
+    rr:logicalTable [ rr:sqlQuery """
+        SELECT *,
+          CASE Country
+            WHEN 'Austria'        THEN 'Austria'
+            WHEN 'Belgium'        THEN 'Belgium'
+            WHEN 'Brazil'         THEN 'Brazil'
+            WHEN 'Canada'         THEN 'Canada'
+            WHEN 'Czech Republic' THEN 'Czechia'
+            WHEN 'Denmark'        THEN 'Denmark'
+            WHEN 'Germany'        THEN 'Germany'
+            WHEN 'Norway'         THEN 'Norway'
+            WHEN 'USA'            THEN 'UnitedStatesOfAmerica'
+          END AS CountryCode
+        FROM Employee
+    """ ] ;
+    rr:subjectMap [
+        rr:template "http://example.org/chinook/employee/E{EmployeeId}" ;
+        rr:class vocab:Employee
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:firstName ;
+        rr:objectMap [ rr:column "FirstName" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:lastName ;
+        rr:objectMap [ rr:column "LastName" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:title ;
+        rr:objectMap [ rr:column "Title" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:email ;
+        rr:objectMap [ rr:column "Email" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:city ;
+        rr:objectMap [ rr:column "City" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:country ;
+        rr:objectMap [ rr:template "https://www.omg.org/spec/LCC/Countries/ISO3166-1-CountryCodes/{CountryCode}" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:reportsTo ;
+        rr:objectMap [
+            rr:parentTriplesMap <#EmployeeMap> ;
+            rr:joinCondition [ rr:child "ReportsTo" ; rr:parent "EmployeeId" ]
+        ]
+    ] .
+
+# ── Customer ──────────────────────────────────────────────────────────────────
+
+<#CustomerMap>
+    rr:logicalTable [ rr:sqlQuery """
+        SELECT *,
+          CASE Country
+            WHEN 'Austria'        THEN 'Austria'
+            WHEN 'Belgium'        THEN 'Belgium'
+            WHEN 'Brazil'         THEN 'Brazil'
+            WHEN 'Canada'         THEN 'Canada'
+            WHEN 'Czech Republic' THEN 'Czechia'
+            WHEN 'Denmark'        THEN 'Denmark'
+            WHEN 'Germany'        THEN 'Germany'
+            WHEN 'Norway'         THEN 'Norway'
+            WHEN 'USA'            THEN 'UnitedStatesOfAmerica'
+          END AS CountryCode
+        FROM Customer
+    """ ] ;
+    rr:subjectMap [
+        rr:template "http://example.org/chinook/customer/C{CustomerId}" ;
+        rr:class vocab:Customer
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:firstName ;
+        rr:objectMap [ rr:column "FirstName" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:lastName ;
+        rr:objectMap [ rr:column "LastName" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:email ;
+        rr:objectMap [ rr:column "Email" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:country ;
+        rr:objectMap [ rr:template "https://www.omg.org/spec/LCC/Countries/ISO3166-1-CountryCodes/{CountryCode}" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:company ;
+        rr:objectMap [ rr:column "Company" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:supportedBy ;
+        rr:objectMap [
+            rr:parentTriplesMap <#EmployeeMap> ;
+            rr:joinCondition [ rr:child "SupportRepId" ; rr:parent "EmployeeId" ]
+        ]
+    ] .
+
+# ── Invoice ───────────────────────────────────────────────────────────────────
+
+<#InvoiceMap>
+    rr:logicalTable [ rr:sqlQuery """
+        SELECT *,
+          CASE BillingCountry
+            WHEN 'Austria'        THEN 'Austria'
+            WHEN 'Belgium'        THEN 'Belgium'
+            WHEN 'Brazil'         THEN 'Brazil'
+            WHEN 'Canada'         THEN 'Canada'
+            WHEN 'Czech Republic' THEN 'Czechia'
+            WHEN 'Denmark'        THEN 'Denmark'
+            WHEN 'Germany'        THEN 'Germany'
+            WHEN 'Norway'         THEN 'Norway'
+            WHEN 'USA'            THEN 'UnitedStatesOfAmerica'
+          END AS BillingCountryCode
+        FROM Invoice
+    """ ] ;
+    rr:subjectMap [
+        rr:template "http://example.org/chinook/invoice/I{InvoiceId}" ;
+        rr:class vocab:Invoice
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:invoiceDate ;
+        rr:objectMap [ rr:column "InvoiceDate" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:billingCountry ;
+        rr:objectMap [ rr:template "https://www.omg.org/spec/LCC/Countries/ISO3166-1-CountryCodes/{BillingCountryCode}" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:total ;
+        rr:objectMap [ rr:column "Total" ; rr:datatype xsd:decimal ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:invoicedTo ;
+        rr:objectMap [
+            rr:parentTriplesMap <#CustomerMap> ;
+            rr:joinCondition [ rr:child "CustomerId" ; rr:parent "CustomerId" ]
+        ]
+    ] .
+
+# ── InvoiceLine ───────────────────────────────────────────────────────────────
+
+<#InvoiceLineMap>
+    rr:logicalTable [ rr:tableName "InvoiceLine" ] ;
+    rr:subjectMap [
+        rr:template "http://example.org/chinook/invoiceline/I{InvoiceLineId}" ;
+        rr:class vocab:InvoiceLine
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:quantity ;
+        rr:objectMap [ rr:column "Quantity" ; rr:datatype xsd:integer ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:unitPrice ;
+        rr:objectMap [ rr:column "UnitPrice" ; rr:datatype xsd:decimal ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:onInvoice ;
+        rr:objectMap [
+            rr:parentTriplesMap <#InvoiceMap> ;
+            rr:joinCondition [ rr:child "InvoiceId" ; rr:parent "InvoiceId" ]
+        ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:forTrack ;
+        rr:objectMap [
+            rr:parentTriplesMap <#TrackMap> ;
+            rr:joinCondition [ rr:child "TrackId" ; rr:parent "TrackId" ]
+        ]
+    ] .
+
+# ── Playlist ──────────────────────────────────────────────────────────────────
+
+<#PlaylistMap>
+    rr:logicalTable [ rr:tableName "Playlist" ] ;
+    rr:subjectMap [
+        rr:template "http://example.org/chinook/playlist/P{PlaylistId}" ;
+        rr:class vocab:Playlist
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:name ;
+        rr:objectMap [ rr:column "Name" ]
+    ] .
+
+# ── PlaylistTrack (junction) ──────────────────────────────────────────────────
+# The junction table has no surrogate key, so we use the Playlist IRI as subject
+# and add vocab:includesTrack arcs — merging cleanly with the PlaylistMap triples.
+
+<#PlaylistTrackMap>
+    rr:logicalTable [ rr:tableName "PlaylistTrack" ] ;
+    rr:subjectMap [
+        rr:template "http://example.org/chinook/playlist/P{PlaylistId}"
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate vocab:includesTrack ;
+        rr:objectMap [
+            rr:parentTriplesMap <#TrackMap> ;
+            rr:joinCondition [ rr:child "TrackId" ; rr:parent "TrackId" ]
+        ]
+    ] .

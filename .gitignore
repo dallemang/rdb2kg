@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# generated outputs (not source files)
+examples/*/chinook.db
+examples/*/output/
+/chinook.ttl
+
+# editor backups
+*~
+
+# local Claude Code settings (personal/machine-specific)
+.claude/

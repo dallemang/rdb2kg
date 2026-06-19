@@ -1,0 +1,6 @@
+question: What albums does a given artist have?
+sql: |
+  SELECT a.Title
+  FROM Album a
+  JOIN Artist ar ON a.ArtistId = ar.ArtistId
+  WHERE ar.Name = 'AC/DC'

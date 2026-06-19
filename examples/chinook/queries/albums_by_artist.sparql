@@ -1,0 +1,9 @@
+PREFIX vocab: <http://example.org/chinook/vocab#>
+
+SELECT ?artistName ?albumTitle WHERE {
+    ?album  a vocab:Album ;
+            vocab:title    ?albumTitle ;
+            vocab:byArtist ?artist .
+    ?artist vocab:name     ?artistName .
+}
+ORDER BY ?artistName ?albumTitle

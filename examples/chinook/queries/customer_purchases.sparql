@@ -1,0 +1,12 @@
+PREFIX vocab: <http://example.org/chinook/vocab#>
+
+SELECT ?firstName ?lastName ?country (SUM(?total) AS ?spent) WHERE {
+    ?invoice  a vocab:Invoice ;
+              vocab:invoicedTo  ?customer ;
+              vocab:total       ?total .
+    ?customer vocab:firstName   ?firstName ;
+              vocab:lastName    ?lastName ;
+              vocab:country     ?country .
+}
+GROUP BY ?customer ?firstName ?lastName ?country
+ORDER BY DESC(?spent)

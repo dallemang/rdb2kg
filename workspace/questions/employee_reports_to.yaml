@@ -1,0 +1,7 @@
+question: Who does a given employee report to?
+notes: Employee has a self-referential ReportsTo FK; the top of the hierarchy has no manager.
+sql: |
+  SELECT m.FirstName || ' ' || m.LastName AS Manager
+  FROM Employee e
+  LEFT JOIN Employee m ON e.ReportsTo = m.EmployeeId
+  WHERE e.FirstName = 'Nancy' AND e.LastName = 'Edwards'

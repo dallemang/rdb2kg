@@ -1,0 +1,14 @@
+PREFIX vocab: <http://example.org/chinook/vocab#>
+
+SELECT ?trackName ?artistName ?albumTitle WHERE {
+    ?track  a vocab:Track ;
+            vocab:name      ?trackName ;
+            vocab:hasGenre  ?genre ;
+            vocab:onAlbum   ?album .
+    ?genre  vocab:name      ?genreName .
+    ?album  vocab:title     ?albumTitle ;
+            vocab:byArtist  ?artist .
+    ?artist vocab:name      ?artistName .
+    FILTER (?genreName IN ("Metal", "Heavy Metal"))
+}
+ORDER BY ?artistName ?albumTitle ?trackName

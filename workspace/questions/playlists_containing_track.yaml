@@ -1,0 +1,7 @@
+question: Which playlists include a given track?
+sql: |
+  SELECT p.Name AS Playlist
+  FROM Track t
+  JOIN PlaylistTrack pt ON t.TrackId  = pt.TrackId
+  JOIN Playlist p       ON pt.PlaylistId = p.PlaylistId
+  WHERE t.Name = 'For Those About To Rock (We Salute You)'

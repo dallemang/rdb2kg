@@ -1,0 +1,6 @@
+question: What tracks belong to a given genre?
+sql: |
+  SELECT t.Name
+  FROM Track t
+  JOIN Genre g ON t.GenreId = g.GenreId
+  WHERE g.Name = 'Rock'

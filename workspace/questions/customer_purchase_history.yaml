@@ -1,0 +1,11 @@
+question: What tracks has a given customer purchased?
+notes: Purchases are recorded as invoice lines; a customer may appear on multiple invoices.
+sql: |
+  SELECT t.Name AS Track, ar.Name AS Artist
+  FROM Customer c
+  JOIN Invoice i      ON c.CustomerId  = i.CustomerId
+  JOIN InvoiceLine il ON i.InvoiceId   = il.InvoiceId
+  JOIN Track t        ON il.TrackId    = t.TrackId
+  JOIN Album a        ON t.AlbumId     = a.AlbumId
+  JOIN Artist ar      ON a.ArtistId    = ar.ArtistId
+  WHERE c.Email = 'luisg@embraer.com.br'
