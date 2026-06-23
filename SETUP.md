@@ -61,7 +61,22 @@ schema as YAML (tables, row counts, primary keys, foreign keys).
 
 ---
 
-## 4. Try it end-to-end with the bundled Chinook
+## Two ways to run it — pick one
+
+Sections 4 and 5 are **alternatives**, not sequential steps. Both drive the same
+operations; they differ only in how the assistant reaches them:
+
+- **§4 — workspace route (recommended for this trial).** Claude Code runs the
+  `workspace\CLAUDE.md` snippets, which call the `rdb2kg` package directly. No
+  server to start.
+- **§5 — MCP server route.** You run `rdb2kg` as an MCP server and point an MCP
+  client at it. Use this if you want tool-based integration instead of snippets.
+
+Do one of them. For the Chinook trial, just follow §4 and skip §5.
+
+---
+
+## 4. Run it: the workspace route (recommended)
 
 The repo ships a complete Chinook SQLite database at
 `examples\chinook\chinook_full.db` and a ready-made workspace under `workspace\`
@@ -88,9 +103,23 @@ do in the workspace stays local.
 
 ### 4b. Drive the workflow
 
-From inside `workspace\`, start Claude Code (or another MCP-capable client).
-The `CLAUDE.md` in this directory is loaded automatically and walks the assistant
-through the loop: **inventory → questions → ontology → mapping → validate → iterate**.
+From inside `workspace\`, start Claude Code. The `CLAUDE.md` in this directory is
+loaded automatically as the assistant's instructions for the loop:
+**inventory → questions → ontology → mapping → validate → iterate**.
+
+It won't start on its own — Claude Code waits for you to speak first. Give it an
+opening prompt to kick things off, for example:
+
+> Let's begin. Take inventory and start the rdb2kg workflow.
+
+From there it reads `connection.txt`, pulls the schema, checks `background\`,
+summarises the existing questions, and moves into Step 1.
+
+> **You do not need to start the MCP server for this route.** The workspace
+> `CLAUDE.md` calls the `rdb2kg` package directly (the `import rdb2kg…` snippets),
+> so an installed package and an active venv are all that's required. The MCP
+> server in §5 is a separate, optional way to expose the same operations to an
+> MCP client — skip it unless you specifically want that.
 
 A typical first session:
 
@@ -114,7 +143,9 @@ python -c "from pathlib import Path; from rdb2kg.report import validate_workspac
 
 ---
 
-## 5. Using the MCP server instead of raw snippets
+## 5. Alternative: the MCP server route
+
+*(Skip this if you followed §4 — it's the other way to do the same thing.)*
 
 The same operations are exposed as MCP tools. Start the server (venv active):
 
