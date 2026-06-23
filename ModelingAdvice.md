@@ -175,6 +175,32 @@ The throughline: let the competency questions and the domain define the concepts
 then map each concept to whatever relational shape (whole table, filtered subset,
 join, column group, or external IRI) actually holds its data.
 
+### No orphan classes: the ontology must be connected
+
+Every class must connect to the rest of the ontology through at least one object
+property — one whose `rdfs:domain` or `rdfs:range` is that class and whose other
+end is another class in the ontology. In graph-theory terms, take the *class
+graph* (classes as nodes, object properties as edges between their domain and
+range): it must form a **single connected component**. No class may sit off on its
+own, reachable from nothing and reaching nothing.
+
+A class with only datatype properties (it just hangs literals off itself) is the
+typical offender: it's an island. If you've minted such a class, that's a signal
+to ask how it actually relates to the rest of the model and to add the object
+property that expresses that relationship.
+
+- Bad: a `Department` class with only `name` and `budget` datatype properties,
+  connected to nothing — even though every department obviously *employs*
+  employees and *belongs to* an organization.
+- Good: `Employee worksIn Department`, `Department partOf Organization` — now
+  `Department` is woven into the graph.
+
+Check this before finalising the ontology: if the class graph has more than one
+component, the model is telling you a relationship is missing (or that a stray
+class shouldn't exist at all). The code-list classes from
+[Things, not strings](#things-not-strings) satisfy this automatically — each is
+the range of the object property that links it to its owning entity.
+
 ## Anti-patterns to avoid
 
 _(to be filled)_
