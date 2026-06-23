@@ -1,4 +1,5 @@
 from dataclasses import asdict
+import os
 from pathlib import Path
 from typing import Any
 
@@ -110,6 +111,20 @@ def validate(workspace_dir: str, connection_string: str) -> str:
     report = validate_workspace(Path(workspace_dir), connection_string)
     write_report(Path(workspace_dir), report)
     return report_to_markdown(report)
+
+
+def _modeling_advice_path() -> Path:
+    override = os.environ.get("RDB2KG_MODELING_ADVICE")
+    if override:
+        return Path(override)
+    return Path(__file__).resolve().parents[2] / "ModelingAdvice.md"
+
+
+@mcp.tool()
+def read_modeling_advice() -> str:
+    """Return the project's authoritative modeling guidance (ModelingAdvice.md). Consult it before designing an ontology or R2RML mapping."""
+    path = _modeling_advice_path()
+    return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
 def main() -> None:

@@ -155,6 +155,11 @@ When the user is satisfied with the question set, move to Step 2.
 
 ### Step 2 — Design the ontology
 
+**Before you design anything, read `../ModelingAdvice.md`** and keep it in mind
+through Steps 2 and 3. It is the authoritative source of modelling guidance; where
+it conflicts with the conventions in this file, `ModelingAdvice.md` wins. (Over an
+MCP connection the same content is available from the `read_modeling_advice` tool.)
+
 Propose an OWL ontology in Turtle format. Ask the user for a base namespace IRI
 if they have one; otherwise default to `http://example.org/ontology/`.
 

@@ -1,0 +1,180 @@
+# Modeling Advice
+
+Hard-won ontology-modeling guidance that the assistant **must consult** when
+designing an ontology and its R2RML mapping (Steps 2–3 of the workspace
+workflow).
+
+This file is **authoritative**: where it conflicts with the general conventions
+in `workspace/CLAUDE.md`, the guidance here wins. Treat each entry as a rule,
+not a suggestion, unless it says otherwise.
+
+> Status: being filled in. Entries are added as the maintainer provides them.
+> Each entry should be a discrete, self-contained rule phrased as "do X (because
+> Y)" rather than a vague principle. Add a short worked example where it helps.
+
+---
+
+## Naming
+
+### The sentence rule: a property name should read as the verb in "Subject verbs Object"
+
+Name every property so that `subject property object` reads like a grammatical
+sentence, with the property playing the role of the verb. Read the triple aloud
+to check it.
+
+- Good: `Customer purchases Product`, `Customer owns Product` — the property
+  (`purchases`, `owns`) is a real verb phrase and the sentence reads naturally.
+- Bad: `Customer product Product` — the property is just the object noun repeated;
+  it isn't a verb and says nothing about the relationship.
+- Still bad: `Customer hasProduct Product` — `has`-prefixing a noun is the most
+  common novice reflex. It technically parses, but it's vague: it hides what the
+  relationship actually *is*. Prefer the specific verb (`purchases`, `owns`,
+  `rents`, `returns`) that says how the subject relates to the object.
+
+Why it matters: the verb carries the meaning of the edge. A precise verb makes the
+ontology self-documenting and forces you to decide what the relationship really is;
+a `has`/noun placeholder defers that decision and usually papers over a modelling
+gap. Reserve a bare `has...` only when no more specific verb genuinely exists.
+
+## Classes vs. properties
+
+_(to be filled)_
+
+## Reuse and external vocabularies
+
+### Things, not strings
+
+When a field's allowed values form a fixed list — an enumeration, a code list, a
+lookup/reference table, a `CHECK (... IN (...))` constraint — do **not** model the
+value as a datatype property carrying the raw string (or number). Model each
+allowed value as a **thing**: an individual of a minted class that represents the
+code list.
+
+For each such field:
+
+- Mint a class for the code list itself (e.g. `OrderStatus`, `Currency`,
+  `LifecycleStage`). Declare it `rdfs:subClassOf skos:Concept`. Do **not** create a
+  `skos:ConceptScheme`.
+- Make each allowed value an individual of that class.
+- On each individual, use SKOS to carry the value's data:
+  - `skos:notation` — the identifying string/number from the schema (the literal
+    that appears in the column).
+  - `skos:prefLabel` — the main human-readable label. If the schema or background
+    docs supply one, use it. Only if none is available, derive one by title-casing
+    the notation (`out_of_service` → `Out Of Service`).
+  - `skos:definition`, `skos:altLabel`, etc. — any further descriptive data the
+    schema or background docs provide.
+- Point the owning entity at the individual with an object property. The owning
+  entity is the **subject** (the property's `rdfs:domain`) and the code-list thing
+  is the **object** (its `rdfs:range`). Name the property by
+  [the sentence rule](#the-sentence-rule-a-property-name-should-read-as-the-verb-in-subject-verbs-object).
+  Never a datatype property holding the string.
+
+**Worked example.** A `HardwareAsset` table has a `lifecycle` column with allowed
+values `onboarding`, `operating`, `deprecated`, `out_of_service`:
+
+```turtle
+:LifecycleStage rdfs:subClassOf skos:Concept .
+
+:inLifecycleState a owl:ObjectProperty ;
+    rdfs:domain :HardwareAsset ;
+    rdfs:range  :LifecycleStage .
+
+# one individual per allowed value, e.g.:
+:lifecycle/out_of_service a :LifecycleStage ;
+    skos:notation "out_of_service" ;
+    skos:prefLabel "Out Of Service" .   # title-cased only because no label was given
+```
+
+So `:asset/42 :inLifecycleState :lifecycle/out_of_service` — subject is the
+`HardwareAsset`, object is the thing, never the bare string `"out_of_service"`.
+
+**Mapping mechanics.** These code-list classes do not get an ordinary
+per-row TriplesMap over a data table. Instead, build the individuals' IRIs with an
+`rr:template` keyed on the notation value, so every reference to the same value
+resolves to the same IRI. The object property on the owning table uses the same
+template against its (string/number) column, which is how the join to the thing is
+made without a FK. (`examples/chinook/mapping.ttl` shows this pattern for country
+codes via a SQL `CASE` that normalises the column to the notation used in the
+template.)
+
+This is the payoff hinted at under "Concepts aren't tables → a concept has no
+table at all": the code list is a real concept whose individuals are identified by
+notation and minted by template, not stored as rows to be walked.
+
+## Modeling patterns
+
+### Concepts aren't tables
+
+Do not assume one table = one class. The relational schema reflects storage and
+normalization decisions, not the conceptual model. A class may map to a table, to
+part of a table, to several tables joined, or to no table at all. Decide what the
+*concept* is first (driven by the competency questions), then find where its data
+lives. Common cases:
+
+- **One table → one class.** The straightforward case. Still confirm the table
+  really represents a single coherent concept, not several bundled together.
+
+- **A concept is part of a table (a filtered subset).** A `type`/`status`/
+  `category` discriminator column often means the table holds several concepts.
+  `Account` rows with `type = 'savings'` vs `'checking'` may be distinct classes
+  (`SavingsAccount`, `CheckingAccount`); `Party` with `type = 'person'` vs
+  `'organization'` almost certainly are. Map these with an R2RML `rr:sqlQuery`
+  (or a view) that filters on the discriminator, one TriplesMap per class.
+
+- **A concept spans several joined tables.** When essential information is split
+  across tables by normalization, the concept is the *join*, not any single
+  table. E.g. a `Customer` concept whose address lives in a separate `Address`
+  table, or an `Order` that only makes sense joined with `OrderStatus`. Use an
+  `rr:sqlQuery` that joins them as the logical table for the class.
+
+- **A concept is hidden in a join/junction table.** A pure many-to-many junction
+  (just two FKs) usually encodes a *relationship*, so it becomes an object
+  property, not a class. But if the junction carries attributes that are part of
+  *what the relationship is*, it has become a concept in its own right (an
+  "associative entity") and deserves a class — e.g. `Enrollment` with a grade, or
+  `OrderLine` with quantity and price.
+
+  Be careful what counts as a defining attribute. Provenance and temporal
+  bookkeeping columns — `created_at`, `updated_by`, `source_system`, `valid_from`,
+  a soft-delete flag — do **not** by themselves promote a junction to a class.
+  Almost every table has those, and they describe the *record*, not the
+  relationship. Promote only when the extra columns carry domain meaning the
+  competency questions actually ask about (a grade, a price, a quantity), not
+  generic audit metadata.
+
+- **A concept is several columns of one row (an embedded value).** Repeated
+  column groups like `ship_street, ship_city, ship_zip` (and a parallel
+  `bill_*` set) are an `Address` concept embedded in the row. Lift it into its
+  own class with its own subject IRI rather than flattening the columns onto the
+  owner.
+
+- **One column encodes several concepts (overloaded columns and key/value
+  tables).** Sometimes one relational slot is carrying meaning that should be
+  several properties or classes. Two common shapes:
+  - An *overloaded column* packs distinct meanings into one field — a `notes`
+    column that sometimes holds a phone number, a `code` whose prefix encodes a
+    category.
+  - An *EAV table* (entity-attribute-value) is a generic key/value design: rows
+    like `(entity_id, attribute_name, value)` instead of real columns, so one
+    physical table stands in for many logical properties. (E.g. a `product_attrs`
+    table with rows `(42, 'color', 'red')`, `(42, 'weight', '3kg')`.)
+
+  In both cases, unpack the hidden structure into proper named properties (and
+  classes where warranted) instead of mirroring the storage trick. Be guided by
+  the competency questions — only model the distinctions a question actually needs.
+
+- **A concept has no table at all.** Not every class needs a TriplesMap with a
+  local logical table. Some concepts come from the domain (background docs,
+  external standards) rather than from stored rows. The most important case —
+  turning a string-valued lookup column (a country name, a currency code) into a
+  link to a real individual — is covered by the
+  [Things, not strings](#things-not-strings) rule.
+
+The throughline: let the competency questions and the domain define the concepts,
+then map each concept to whatever relational shape (whole table, filtered subset,
+join, column group, or external IRI) actually holds its data.
+
+## Anti-patterns to avoid
+
+_(to be filled)_
