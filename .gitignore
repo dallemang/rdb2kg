@@ -15,4 +15,5 @@ examples/*/output/
 *~
 
 # local Claude Code settings (personal/machine-specific)
-.claude/
+.claude/settings.json
+.claude/settings.local.json

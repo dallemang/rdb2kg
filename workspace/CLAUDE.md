@@ -419,6 +419,27 @@ user confirms they are happy with the ontology.
 
 ---
 
+## Answering ad-hoc questions
+
+After the graph is materialised, the user can ask natural-language questions at
+any time. Translate the question to SPARQL using the ontology as context, then
+run it against `output/materialized.ttl`.
+
+**Direct mode:** use the `/ask` command (type `/ask <question>`) — it reads the
+ontology, generates SPARQL, runs it, and presents the results.
+
+**MCP mode:** call `get_ontology(workspace_dir)` to load the ontology into
+context, write a SPARQL SELECT query based on the returned Turtle, then call
+`query_sparql(graph_path, sparql)` with
+`graph_path = <workspace_dir>/output/materialized.ttl`.
+
+In both modes: use the exact class and property URIs from the ontology, add
+PREFIX declarations for every namespace you reference, and if the query returns
+nothing check that the classes are present with
+`SELECT DISTINCT ?type WHERE { [] a ?type }`.
+
+---
+
 ## Files reference
 
 | Path | Contents |
@@ -452,7 +473,9 @@ The Python package in `../src/rdb2kg/` provides:
 - `html_report.generate_html_report(dir)` → HTML string (ontology graph + question results)
 
 Every operation above is also exposed as an MCP tool by `rdb2kg.mcp_server`, for
-clients that connect over MCP instead of running these snippets directly.
+clients that connect over MCP instead of running these snippets directly. The MCP
+server additionally exposes `get_ontology(workspace_dir)` → Turtle text, and
+`generate_html_report(workspace_dir)` → path.
 
 All Python snippets in this file use `sys.path.insert(0, '..')` to find the
 package without requiring a separate install step.

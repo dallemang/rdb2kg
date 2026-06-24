@@ -115,6 +115,15 @@ def validate(workspace_dir: str, connection_string: str) -> str:
 
 
 @mcp.tool()
+def get_ontology(workspace_dir: str) -> str:
+    """Return the OWL ontology (Turtle) for this workspace. Use it as context when translating a natural-language question into SPARQL, then call query_sparql to run the result."""
+    path = Path(workspace_dir) / "output" / "ontology.ttl"
+    if not path.exists():
+        return "(ontology not yet written — complete Step 2 of the workflow first)"
+    return path.read_text(encoding="utf-8")
+
+
+@mcp.tool()
 def generate_html_report(workspace_dir: str) -> str:
     """Generate a self-contained HTML report: Cytoscape ontology graph + competency question results. Writes output/report.html and returns its path."""
     html = _gen_html(Path(workspace_dir))

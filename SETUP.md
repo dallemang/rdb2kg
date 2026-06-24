@@ -157,7 +157,8 @@ It runs as a stdio process and waits for an MCP client to connect. Point your
 MCP-compatible client (Claude Code, Cursor, etc.) at this command. The tools are:
 `inspect_schema`, `query_sql`, `materialize`, `query_sparql`, `read_background`,
 `read_questions`, `write_question`, `update_question`, `diff_questions`,
-`write_ontology`, `write_mapping`, and `validate`.
+`write_ontology`, `write_mapping`, `validate`, `get_ontology`, and
+`generate_html_report`.
 
 ---
 
