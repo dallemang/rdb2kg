@@ -177,3 +177,7 @@ def write_ontology(workspace_dir: Path, turtle: str) -> Path:
 
 def write_mapping(workspace_dir: Path, turtle: str) -> Path:
     return _write_output(workspace_dir, "mapping.ttl", turtle)
+
+
+def write_html_report(workspace_dir: Path, html: str) -> Path:
+    return _write_output(workspace_dir, "report.html", html)

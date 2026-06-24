@@ -368,6 +368,40 @@ to Step 5.
 
 ---
 
+### Step 6 — Generate the HTML report
+
+Once the workspace is validated (Step 4 complete), produce a self-contained HTML
+report that can be dropped into any browser:
+
+- An interactive **Cytoscape graph** of the ontology: classes as labelled boxes,
+  object properties as solid arrows with edge labels, `rdfs:subClassOf` as dashed
+  hollow-triangle arrows.  Blue boxes are ontology-local classes; grey boxes are
+  external classes (from OWL, RDFS, SKOS, etc.).
+- A **table** of every competency question with its SPARQL query and a short
+  summary of the results when run against the materialised graph (up to 5 rows,
+  then "… N more").
+
+**Direct mode:**
+
+```python
+import sys; sys.path.insert(0, '..')
+from pathlib import Path
+from rdb2kg.html_report import generate_html_report
+html = generate_html_report(Path('.'))
+Path('output/report.html').write_text(html, encoding='utf-8')
+print('Report written to output/report.html')
+```
+
+Or use your Write tool to write the string to `output/report.html` directly.
+
+**MCP mode:** call `generate_html_report(workspace_dir)`.
+
+Tell the user the report is at `output/report.html` and ask them to open it in
+a browser. The graph layout is computed in the browser via Cytoscape; it
+requires an internet connection to load the Cytoscape library from CDN.
+
+---
+
 ### Step 5 — Iterate
 
 If questions failed:
@@ -396,6 +430,7 @@ user confirms they are happy with the ontology.
 | `output/ontology.ttl` | OWL ontology in Turtle (generated) |
 | `output/mapping.ttl` | R2RML mapping in Turtle (generated) |
 | `output/materialized.ttl` | Materialised RDF graph (generated) |
+| `output/report.html` | Self-contained HTML report with ontology graph and question results (generated) |
 
 ## rdb2kg library
 
@@ -413,6 +448,8 @@ The Python package in `../src/rdb2kg/` provides:
   - `update_question(dir, name, sparql=, status=)` → path
   - `diff_questions(dir)` → `QuestionDiff` (added/removed/modified/unchanged)
   - `write_ontology(dir, turtle)` / `write_mapping(dir, turtle)` → path
+  - `write_html_report(dir, html)` → path
+- `html_report.generate_html_report(dir)` → HTML string (ontology graph + question results)
 
 Every operation above is also exposed as an MCP tool by `rdb2kg.mcp_server`, for
 clients that connect over MCP instead of running these snippets directly.

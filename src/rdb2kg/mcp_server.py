@@ -12,6 +12,7 @@ from .materialize import materialize as do_materialize
 from .sparql_service import query_sparql as run_sparql
 from . import workspace_service as ws
 from .report import validate_workspace, report_to_markdown, write_report
+from .html_report import generate_html_report as _gen_html
 
 mcp = FastMCP("rdb2kg")
 
@@ -111,6 +112,14 @@ def validate(workspace_dir: str, connection_string: str) -> str:
     report = validate_workspace(Path(workspace_dir), connection_string)
     write_report(Path(workspace_dir), report)
     return report_to_markdown(report)
+
+
+@mcp.tool()
+def generate_html_report(workspace_dir: str) -> str:
+    """Generate a self-contained HTML report: Cytoscape ontology graph + competency question results. Writes output/report.html and returns its path."""
+    html = _gen_html(Path(workspace_dir))
+    path = ws.write_html_report(Path(workspace_dir), html)
+    return str(path)
 
 
 def _modeling_advice_path() -> Path:
