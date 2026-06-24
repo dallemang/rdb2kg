@@ -201,6 +201,128 @@ class shouldn't exist at all). The code-list classes from
 [Things, not strings](#things-not-strings) satisfy this automatically — each is
 the range of the object property that links it to its owning entity.
 
+### Commonality and variability: use subclass (or subproperty) to share structure while preserving differences
+
+When several things share a common structure but differ in ways that matter to
+the domain, model the shared part as a superclass and the distinct variants as
+subclasses. This is the **Commonality and Variability (C&V)** pattern. The
+superclass captures what all variants have in common; each subclass adds only
+what makes that variant different.
+
+The most common implementation is `rdfs:subClassOf`. Use `rdfs:subPropertyOf`
+the same way when the varying thing is a relationship rather than an entity.
+
+**When to reach for it.** Look for it whenever:
+- A discriminator column (`type`, `category`, `kind`) splits rows into groups
+  that share most properties but differ on a meaningful subset.
+- Two or more things "have a mechanism" (or a process, or a role) but each gets
+  that mechanism from a different source or with different constraints.
+- You find yourself writing the same property twice with slightly different
+  range restrictions — that's often a sign a superclass is missing.
+
+**Worked example — Fraud cases in a government-funding domain.**
+Both *financial fraud* (receiving money you don't deserve) and *non-financial
+fraud* (gaining preferential treatment, protected-class advantage, etc.) share
+a `mechanism`: the means by which the fraud is carried out. But the mechanism
+for financial fraud must involve a means of collecting money; non-financial
+fraud has no such requirement.
+
+Model this as:
+
+```turtle
+:FraudCase a owl:Class .
+
+# shared structure — every fraud case has a mechanism
+:hasMechanism a owl:ObjectProperty ;
+    rdfs:domain :FraudCase ;
+    rdfs:range  :FraudMechanism .
+
+# variant 1: financial fraud adds a money-collection mechanism
+:FinancialFraudCase rdfs:subClassOf :FraudCase .
+
+:hasMoneyCollectionMechanism a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasMechanism ;
+    rdfs:domain :FinancialFraudCase ;
+    rdfs:range  :MoneyCollectionMechanism .
+
+# variant 2: non-financial fraud — inherits hasMechanism, adds nothing new
+:NonFinancialFraudCase rdfs:subClassOf :FraudCase .
+```
+
+`FinancialFraudCase` and `NonFinancialFraudCase` both inherit `hasMechanism`
+from `FraudCase`. Only `FinancialFraudCase` additionally requires a
+`hasMoneyCollectionMechanism`, which is itself declared a `subPropertyOf
+hasMechanism` — so it satisfies the shared constraint while carrying the
+tighter range restriction. A query over all fraud cases can ask for
+`hasMechanism` universally, while a financial-fraud query asks for
+`hasMoneyCollectionMechanism` specifically.
+
+**Mapping mechanics.** In R2RML, the discriminator column drives this:
+use one TriplesMap per subclass, each with an `rr:sqlQuery` (or view) that
+filters on the discriminator value. The superclass properties are declared once
+in the ontology and inherited; only the subclass-specific properties need
+additional TriplesMaps. (This is the same filter-on-discriminator shape
+described in [Concepts aren't tables](#concepts-arent-tables).)
+
+**Don't overdo it.** Subclass only when the variants differ in a way the
+competency questions actually ask about — when different queries, constraints,
+or properties apply to one variant and not others. If the only difference is a
+label or a code value, a [code-list individual](#things-not-strings) is enough;
+you don't need a subclass per value.
+
 ## Anti-patterns to avoid
 
 _(to be filled)_
+
+## Provenance and documentation
+
+### Cite your sources: use rdfs:comment and rdfs:seeAlso to record where classes and properties come from
+
+When a class or property is drawn from — or aligned with — an external standard,
+regulation, specification, or reference model, record that provenance directly on
+the term. Do not rely on the mapping file, commit messages, or tribal knowledge to
+carry this information; put it in the ontology itself so any consumer of the graph
+can see it.
+
+Use these two annotations:
+
+- **`rdfs:comment`** — a human-readable note explaining the source and, if
+  useful, how the term relates to it. Write it as a sentence or short paragraph.
+  Include the source name, version or date if known, and any deviation from the
+  source definition.
+
+- **`rdfs:seeAlso`** — a URI pointing directly at the authoritative definition:
+  a spec section, a regulation paragraph, a published ontology term, a schema.org
+  page, etc. Prefer the most stable, resolvable URI you can find. Multiple
+  `rdfs:seeAlso` triples are fine when more than one source applies.
+
+```turtle
+:FinancialFraudCase a owl:Class ;
+    rdfs:subClassOf :FraudCase ;
+    rdfs:comment "Fraud involving improper receipt of government funds. Defined in "
+                 "accordance with OMB Circular A-123, Appendix C, §3.1." ;
+    rdfs:seeAlso <https://www.whitehouse.gov/omb/management/office-federal-financial-management/> .
+
+:hasMechanism a owl:ObjectProperty ;
+    rdfs:domain :FraudCase ;
+    rdfs:range  :FraudMechanism ;
+    rdfs:comment "The means by which the fraud was carried out. Concept adapted from "
+                 "the ACFE Fraud Tree taxonomy." ;
+    rdfs:seeAlso <https://www.acfe.com/fraud-resources/fraud-tree> .
+```
+
+**When the term is reused verbatim.** If you are minting a local IRI for a
+concept that is already defined in a published ontology (rather than importing
+the external IRI directly), use both annotations: `rdfs:comment` to say it is
+equivalent to the external term, and `rdfs:seeAlso` to point at it. Consider
+also adding an `owl:equivalentClass` or `owl:equivalentProperty` triple if
+alignment matters for reasoning.
+
+**When you deviate from a source.** If your definition narrows, broadens, or
+otherwise differs from the cited source, say so explicitly in `rdfs:comment`.
+"Adapted from X — restricted here to cases involving federal funds" is more
+useful than a bare citation that implies exact alignment.
+
+**Minimum bar.** If you know a term was inspired by or matches something
+external, add at least an `rdfs:comment` naming the source even if you cannot
+find a stable URI for `rdfs:seeAlso`. A prose citation is better than silence.
