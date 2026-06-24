@@ -9,6 +9,31 @@ You drive it. The user steers.
 
 ---
 
+## Execution mode
+
+Identify your execution mode before starting — it determines how you write files.
+
+**Direct mode (Claude Code or similar):** You have file-system tools (Read,
+Write, Edit) and can execute Python code. For Turtle files, write
+`output/ontology.ttl` and `output/mapping.ttl` directly with your Write tool —
+do not use the Python `write_ontology`/`write_mapping` wrappers, they are just
+`path.write_text(content)` and the direct write is simpler. For question YAML
+files, still use the Python `write_question`/`update_question` calls — they
+apply custom formatting that is fiddly to reproduce by hand. For schema
+inspection, materialization, and validation, use the Python snippets below.
+
+**MCP mode:** You are an AI client connected to the rdb2kg MCP server. MCP is
+a message-passing protocol — you have no direct access to the server's
+filesystem, only to the tools the server exposes. The `write_ontology`,
+`write_mapping`, `write_question`, and `update_question` MCP tools write to the
+server-side filesystem on your behalf; use them for all file operations.
+
+How to tell which mode you are in: if you have a Write or file-creation tool
+available, you are in Direct mode. If your only tools are the rdb2kg MCP tools
+(`inspect_schema`, `query_sql`, `write_ontology`, etc.), you are in MCP mode.
+
+---
+
 ## On startup: take inventory
 
 Run these checks before saying anything else. Report what you find, flag what
@@ -191,12 +216,9 @@ class and property, say:
 
 Iterate with the user until the ontology is stable. Then save it:
 
-```python
-import sys; sys.path.insert(0, '..')
-from pathlib import Path
-from rdb2kg.workspace_service import write_ontology
-write_ontology(Path('.'), ontology_turtle)   # -> output/ontology.ttl
-```
+- **Direct mode:** write the Turtle text directly to `output/ontology.ttl`
+  using your Write tool.
+- **MCP mode:** call `write_ontology(workspace_dir, ontology_turtle)`.
 
 You do not have to build the whole ontology before moving on. The build is
 opportunistic: as you reason through each competency question you may add the
@@ -240,12 +262,9 @@ on the `objectMap`.
 
 Show the mapping to the user before saving. Save it:
 
-```python
-import sys; sys.path.insert(0, '..')
-from pathlib import Path
-from rdb2kg.workspace_service import write_mapping
-write_mapping(Path('.'), mapping_turtle)   # -> output/mapping.ttl
-```
+- **Direct mode:** write the Turtle text directly to `output/mapping.ttl`
+  using your Write tool.
+- **MCP mode:** call `write_mapping(workspace_dir, mapping_turtle)`.
 
 A reference example of the full R2RML format is at
 `../examples/chinook/mapping.ttl`.
