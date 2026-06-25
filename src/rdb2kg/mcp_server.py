@@ -115,6 +115,18 @@ def validate(workspace_dir: str, connection_string: str) -> str:
 
 
 @mcp.tool()
+def load_graph(workspace_dir: str) -> str:
+    """Load (or reload) the materialised graph into the in-memory pyoxigraph store.
+    Call this after materializing or whenever the graph changes. Subsequent
+    query_sparql calls reuse the cached store until the file is modified."""
+    from .ox_store import load_and_report
+    path = Path(workspace_dir) / "output" / "materialized.ttl"
+    if not path.exists():
+        return "No materialized graph found — run the validate step first."
+    return load_and_report(path)
+
+
+@mcp.tool()
 def get_ontology(workspace_dir: str) -> str:
     """Return the OWL ontology (Turtle) for this workspace. Use it as context when translating a natural-language question into SPARQL, then call query_sparql to run the result."""
     path = Path(workspace_dir) / "output" / "ontology.ttl"

@@ -428,10 +428,13 @@ run it against `output/materialized.ttl`.
 **Direct mode:** use the `/ask` command (type `/ask <question>`) — it reads the
 ontology, generates SPARQL, runs it, and presents the results.
 
-**MCP mode:** call `get_ontology(workspace_dir)` to load the ontology into
-context, write a SPARQL SELECT query based on the returned Turtle, then call
-`query_sparql(graph_path, sparql)` with
-`graph_path = <workspace_dir>/output/materialized.ttl`.
+**MCP mode:** call `load_graph(workspace_dir)` once to warm the in-memory
+pyoxigraph store (do this after materializing or at the start of a session).
+Then call `get_ontology(workspace_dir)` to load the ontology into context,
+write a SPARQL SELECT query based on the returned Turtle, and call
+`query_sparql(<workspace_dir>/output/materialized.ttl, sparql)` to run it.
+The store stays loaded between calls and is reloaded automatically if
+`materialized.ttl` changes.
 
 In both modes: use the exact class and property URIs from the ontology, add
 PREFIX declarations for every namespace you reference, and if the query returns
