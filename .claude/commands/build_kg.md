@@ -51,7 +51,7 @@ Ask the user explicitly:
 
 > How do you want to define the competency questions the knowledge graph must
 > answer (you'll want at least five)?
-> 1. I'll provide them myself
+> 1. You'll provide them yourself
 > 2. Guess them from the schema
 > 3. Use the Chinook example questions
 > 4. Let's talk it through together

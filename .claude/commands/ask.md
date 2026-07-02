@@ -20,7 +20,37 @@ You must use these URIs **exactly** in the SPARQL — a single character differe
 If `output/materialized.ttl` does not exist, stop and tell the user to complete
 Step 4 of the workflow (run validation) to materialise the graph first.
 
-### 3. Write the SPARQL
+### 3. Clarify the question against the ontology
+
+Before writing any SPARQL, map the question onto the ontology terms from Step 1
+and check it resolves to exactly one unambiguous query shape. Look for:
+
+- **Term doesn't map cleanly** — the question uses a word that matches no
+  class/property, or matches more than one plausible candidate (e.g. "artist"
+  could be an `owl:Class` or a datatype property on another class).
+- **Underspecified comparison or ranking** — "top", "best", "most active",
+  "recent" without a stated metric, direction, or time window.
+- **Ambiguous subject/direction** — the question could be read as traversing a
+  relationship either way, or it's unclear which entity the answer should be
+  rows of.
+- **Multiple candidate query shapes** — e.g. it's unclear whether the user
+  wants a list, a count, or a single value.
+
+If the question is already unambiguous given the ontology, say so briefly and
+move straight to Step 4 — do not interview the user just to be thorough.
+
+If it is ambiguous, interview the user: ask targeted, specific questions that
+reference the actual class/property names you're choosing between, one round
+at a time (don't dump a long questionnaire). State your working interpretation
+in plain English as you go — grounded in real ontology terms, not SPARQL — so
+the user can correct it directly. Repeat until you can state the interpretation
+with no remaining ambiguity, then confirm it back to the user in one sentence
+before proceeding.
+
+Keep this proportionate: most questions need zero or one clarifying round: only
+keep going if a genuine ambiguity remains that would change the query's result.
+
+### 4. Write the SPARQL
 
 Translate the question into a SPARQL SELECT query:
 - Add a `PREFIX` declaration for every namespace you reference
@@ -30,7 +60,7 @@ Translate the question into a SPARQL SELECT query:
 
 Show the SPARQL to the user before running it.
 
-### 4. Run the SPARQL
+### 5. Run the SPARQL
 
 ```python
 import sys; sys.path.insert(0, '..')
@@ -44,7 +74,7 @@ for row in result.rows[:20]:
     print(row)
 ```
 
-### 5. Present the results
+### 6. Present the results
 
 - Show up to 15 rows in a readable format (a markdown table if the columns are few)
 - If there are more rows, state the total and elide the rest: "… 42 more rows"
