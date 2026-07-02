@@ -86,7 +86,26 @@ Read all `.yaml` files in `questions/`. For each, note the question text,
 whether it has a `sql:` field, and its `status:` if present.
 
 Summarise what you found from steps 1–3 to the user in a short paragraph, then
-move to Step 1 of the workflow.
+give a brief orientation — once, at the start of a fresh session — explaining
+how they can steer the knowledge graph:
+
+> **Two ways to guide the result:**
+>
+> 1. **Background materials** — drop any domain documents into the `background/`
+>    directory before or during the session. Data dictionaries, glossaries, demo
+>    scripts, workflow descriptions, system documentation, field-level notes —
+>    anything that explains what the data means in the real world. The richer this
+>    material, the better the ontology will reflect your domain rather than just
+>    the database structure.
+>
+> 2. **Competency questions** — these are plain-English questions that your
+>    knowledge graph must be able to answer. I will propose a starting set; you
+>    can accept, edit, add, or remove them freely. The questions drive every
+>    design decision: classes, properties, and mappings exist only to answer
+>    them. You do not need any technical knowledge to write a good question —
+>    more on that below.
+
+Then move to Step 1 of the workflow.
 
 ---
 
@@ -119,17 +138,18 @@ write_question(
     'albums_by_artist',
     'What albums does a given artist have?',
     notes='Optional clarification about what this is really asking.',
-    sql="SELECT a.Title FROM Album a\n"
+    sql="SELECT ar.Name, a.Title FROM Album a\n"
         "JOIN Artist ar ON a.ArtistId = ar.ArtistId\n"
-        "WHERE ar.Name = 'AC/DC'",
+        "ORDER BY ar.Name, a.Title",
     source='schema: Album.ArtistId -> Artist.ArtistId',
 )
 ```
 
-The `sql:` field is optional but strongly encouraged — it pins down exactly what
-data the question refers to and will be used to validate SPARQL results later.
-If the user knows SQL, ask them to provide it for each question. If they don't,
-offer to write it yourself based on the schema.
+The `sql:` field is for **your internal use** — write it yourself based on the
+schema. Never ask the user for SQL and never expose it in conversation; it is
+validation plumbing, not something the user needs to know about. Write a SQL
+query that exercises the pattern the question describes (not a lookup for a
+specific value — see generality criterion below).
 
 `write_question` only sets `question`, `notes`, `sql`, and `source` — never add
 `sparql:` or `status:` at this stage (those are written by `update_question` in
@@ -147,15 +167,24 @@ for q in read_questions(Path('.')):
 ```
 
 Judge them on:
+- **Generality** — does the question describe a *pattern* rather than a lookup?
+  A good CQ names no specific individuals, values, or identifiers. "What albums
+  does a given artist have?" is good — it establishes the artist→album
+  relationship without naming any artist. "How many albums does AC/DC have?" is
+  bad — it will only validate against one data point and cannot drive a reusable
+  ontology design. Aggregate questions are fine ("Which artist appears in the
+  most playlists?") — they exercise relationships without naming values.
 - **Coverage** — do they exercise the important tables and relationships, or are
   whole regions of the schema untouched?
 - **Vagueness** — is each question specific enough to have a definite answer?
+  "Tell me about artists" is too vague; "What albums does a given artist have?"
+  is concrete.
 - **Testability** — could it be answered by a concrete SPARQL query with a
-  checkable result? A question with a `sql:` field is testable by construction.
+  checkable result?
 - **Redundancy** — do any two questions reduce to the same query shape?
 
-Surface this critique to the user as advice; do not silently rewrite their
-questions.
+Surface this critique to the user as plain-English advice — no SQL, no
+technical jargon — and do not silently rewrite their questions.
 
 **Review gate.** The user may freely add, edit, or delete files in `questions/`.
 Detect what changed since the last pass:
