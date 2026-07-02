@@ -114,20 +114,24 @@ then design the ontology per Step 2 of that file.
 
 Once the first ontology draft is saved to `output/ontology.ttl`, generate the
 Cytoscape HTML view of it right away — don't wait for the mapping or
-validation to exist first:
+validation to exist first — and open it in the user's default browser
+yourself, every time, without asking:
 
 ```python
-import sys; sys.path.insert(0, '..')
+import sys, webbrowser; sys.path.insert(0, '..')
 from pathlib import Path
 from rdb2kg.html_report import generate_html_report
 html = generate_html_report(Path('.'))
-Path('output/report.html').write_text(html, encoding='utf-8')
+out = Path('output/report.html')
+out.write_text(html, encoding='utf-8')
+webbrowser.open(out.resolve().as_uri())
 ```
 
-Tell the user the ontology graph is at `output/report.html` — open it in a
-browser to see the classes and properties laid out visually (it works before
-the mapping or competency-question results exist; those sections just show as
-empty/pending until later steps fill them in).
+Tell the user the ontology graph is at `output/report.html` and that you've
+opened it (it works before the mapping or competency-question results exist;
+those sections just show as empty/pending until later steps fill them in). If
+`webbrowser.open` fails (e.g. no display in this environment), fall back to
+telling them to open the file themselves.
 
 ---
 
@@ -142,5 +146,5 @@ loop, not a mistake.
 
 Then validate (Step 4) and iterate (Step 5) as needed. When the question set
 reaches `status: validated`, regenerate `output/report.html` (Step 6 — same
-call as above) so it reflects the final ontology and the competency-question
-results, and point the user at it again.
+call as above, including `webbrowser.open`) so it reflects the final ontology
+and the competency-question results, and open it again automatically.
